@@ -1,1 +1,8 @@
-Note: this macro should be used with my "process" action plugin.
+First of all thanks to felixonmars for open-sourcing his logchecker.
+
+The goal of this fork will be fixing some issues present in the current version and adding support for logs in other languages.
+
+Requisites:
+
+* MoinMoin
+* felixonmars' action plugin, available at https://github.com/felixonmars/process

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-u"""
-    MoinMoin - LogChecker
-"""
+u"LogChecker"
 import re
 Dependencies = ['time']
 
@@ -130,7 +128,6 @@ class LogChecker(object):
                 from pymongo import Connection
                 mongo = Connection('127.0.0.1', 27017, safe = True)
                 db = mongo.logchecker
-                db.authenticate('felix', '')
                 offset = db.offset
                 
                 results = list(offset.find({"keywords": {"$all": drive.split()}}))

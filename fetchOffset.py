@@ -5,7 +5,6 @@ s = urllib2.urlopen("http://www.accuraterip.com/driveoffsets.htm").read().replac
 from pymongo import Connection
 mongo = Connection('127.0.0.1', 27017, safe = True)
 db = mongo.logchecker
-db.authenticate('felix', '')
 db.offset.drop()
 
 for t in [re.sub(r"\$+", "$", re.sub(r"<[^>]+>", "$", x)).strip("$").split("$") for x in s.split("</tr>")[1:-2]]:

@@ -152,21 +152,22 @@ class LogChecker(object):
                 
                 results = list(offset.find({"keywords": {"$all": drive.split()}}))
                 
-                for result in results:
-                    if result['offset'] == logoffset or result['offset'] == "+" + logoffset:
-                        self.result.append("Read offset correction : <font color=green>" + logoffset + "</font> For drive : <font color=blue>" + result['name'] + "</font> : <font color=green>Pass</font>")
-                        return True
+                if len(results):
+					for result in results:
+						if result['offset'] == logoffset or result['offset'] == "+" + logoffset:
+							self.result.append("Read offset correction : <font color=green>" + logoffset + "</font> For drive : <font color=blue>" + result['name'] + "</font> : <font color=green>Pass</font>")
+							return True
+							
+						else:
+							self.score -= 5
+							self.result.append("Read offset correction : <font color=red>Incorrect read offset for drive. (-5 points)</font>")
+							self.result.append("Checked against the following drive(s): <table>")
+							self.result[-1] += "<tr><td><font color=blue>" + result['name'] + "</font></td><td>" + result['offset'] + "</td></tr>"
+							self.result[-1] += "</table>"
                 
-                if not len(results):
+                if not len(results) and logoffset == "0":
                     self.score -= 5
                     self.result.append("Read offset correction : <font color=red>Fail, The drive was not found in the database, so we cannot determine the correct read offset. However, the read offset in this case was 0, which is almost never correct. As such, we are assuming that the offset is incorrect (-5 points)</font>")
-                else:
-                    self.score -= 5
-                    self.result.append("Read offset correction : <font color=red>Incorrect read offset for drive. (-5 points)</font>")
-                    self.result.append("Checked against the following drive(s): <table>")
-                    for result in results:
-                        self.result[-1] += "<tr><td><font color=blue>" + result['name'] + "</font></td><td>" + result['offset'] + "</td></tr>"
-                    self.result[-1] += "</table>"
         
         return True
     

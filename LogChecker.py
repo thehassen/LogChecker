@@ -6,6 +6,26 @@ Dependencies = ['time']
 def macro_LogChecker(macro, noreply=True):
     
     output = """
+	<style type="text/css"> 
+	.styled-button-10 {
+		background:#5CCD00;
+		background:-moz-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+		background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#5CCD00),color-stop(100%,#4AA400));
+		background:-webkit-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+		background:-o-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+		background:-ms-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+		background:linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+		filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#5CCD00', endColorstr='#4AA400',GradientType=0);
+		padding:10px 15px;
+		color:#fff;
+		font-family:'Helvetica Neue',sans-serif;
+		font-size:16px;
+		border-radius:5px;
+		-moz-border-radius:5px;
+		-webkit-border-radius:5px;
+		border:1px solid #459A00
+	}
+	</style>
     <script src='http://microajax.googlecode.com/files/microajax.minified.js'></script>
     <script language="javascript">
         function getLog(){
@@ -15,7 +35,7 @@ def macro_LogChecker(macro, noreply=True):
             var source = log.value;
             var postdata = "log=" + encodeURIComponent(source);
             
-            result.innerHTML = "<img src='http://www.ybole.com/static/images/loading.gif' />";
+            result.innerHTML = "<img src='moin_static198/common/loading.gif' />";
             
             microAjax("/LogChecker?action=process", function (res) {
               result.innerHTML = res;
@@ -24,7 +44,7 @@ def macro_LogChecker(macro, noreply=True):
         }
     </script>
     <p><textarea id="log" style="width: 600px; height: 200px;"></textarea></p>
-    <p><input type="button" onclick="javascript:getLog();" value="Submit" /></p>
+    <p><input type="button" class="styled-button-10" onclick="javascript:getLog();" value="Comprobar" /></p>
     <div id="result"></div>
     """
     

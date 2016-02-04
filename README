@@ -1,6 +1,6 @@
 First of all thanks to felixonmars for open-sourcing his logchecker.
 
-The goal of this fork will be fixing some issues present in the current version and adding support for logs in other languages.
+The goal of this fork will be fixing some issues present in the current version and adding support for logs in other languages, mainly Spanish for a start.
 
 Requisites:
 

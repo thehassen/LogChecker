@@ -98,6 +98,7 @@ class LogChecker(object):
                 if answer[0][2] != answer[0][4]:
                     passed = False
                     msg = "CRC check does not match"
+                    scoredelta = 30
         else:
             item = item.split("|")[0]
         
@@ -191,7 +192,7 @@ class LogChecker(object):
         self.check(u"Delete leading and trailing silent blocks|删除开始与结尾的静音部分|去除首尾靜音區塊|去除首尾静音块", u"(Yes|No|是|否)", u"Yes|是", 5, 'Deletes leading and trailing silent blocks', reverse = True)
         self.check(u"Null samples used in CRC calculations|校验和计算中使用空白采样|在CRC\s*计算中使用了空样本", u"(Yes|No|是|否)", u"Yes|是", 1, 'Null samples should be used in CRC calculations, but this doesn\'t affect audio data')
         self.check(u"Gap handling|间隙处理", r"([^\s])+", "Not detected", 20, 'Gaps were not detected', reverse = True)
-        self.check(u"Add ID3 tag|添加ＩＤ３标签|添加\s*ID3\s*标签", u"(Yes|No|是|否)", u"Yes|是", 5, 'ID3 tags should not be added to FLAC rips - they are mainly for MP3 files. FLACs should have vorbis comments for tags instead', reverse = True)
+        self.check(u"Add ID3 tag|添加ＩＤ３标签|添加\s*ID3\s*标签", u"(Yes|No|是|否)", u"Yes|是", 0, 'ID3 tags should not be added to FLAC rips - they are mainly for MP3 files. FLACs should have vorbis comments for tags instead', reverse = True)
         
         self.result.append("")
         

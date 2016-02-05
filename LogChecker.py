@@ -215,6 +215,7 @@ class LogChecker(object):
                 self.checktrack("Timing problem", r"(\d:\d{2}:\d{2})", 20, "Suspicious position(s) found")
                 self.checktrack("Missing samples", r"", 20, "Missing sample(s) found")
                 self.checktrack(u"Test|Comprobación|测试\s*CRC", ur"([0-9A-F]{8})\n\s*(Copy|Copiar|复制)\s*CRC\s*([0-9A-F]{8})", 10, " Test and copy was not used", reverse = False)
+                self.checktrack("Copy OK|Copia OK", r"", 5, " Copy not OK", reverse = False)
 
 def action_LogChecker(request):
     source = request.form['log']

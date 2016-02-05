@@ -93,14 +93,13 @@ class LogChecker(object):
             passed = not passed
         
         if len(answer):
-            item = answer[0][0]
-            if "CRC" in item:
+            if "CRC" in answer[0][0]:
                 if answer[0][2] != answer[0][4]:
                     passed = False
                     msg = "CRC check does not match"
                     scoredelta = 30
-        else:
-            item = item.split("|")[0]
+
+        item = item.split("|")[0]
         
         if passed:
             self.result.append(item + " : <font color=green>Pass</font>")
@@ -115,7 +114,7 @@ class LogChecker(object):
             self.score -= scoredelta
     
     def checkdrive(self):
-        drive = re.findall(ur"(Used drive|光驱型号|使用光碟機|使用驱动器)\s*:?\s*(.+)", self.source, flags = re.I + re.U)
+        drive = re.findall(ur"(Used drive|Usar unidad|光驱型号|使用光碟機|使用驱动器)\s*:?\s*(.+)", self.source, flags = re.I + re.U)
         
         if not len(drive):
             self.score = 0
@@ -130,8 +129,10 @@ class LogChecker(object):
         
         if u"光驱型号" in self.source or u"使用驱动器" in self.source:
             self.language = "chs"
-        elif u"使用光碟機" in self.source:
+        if u"使用光碟機" in self.source:
             self.language = "cht"
+        elif u"Usar unidad" in self.source:
+            self.language = "es"
         else:
             self.language = "eng"
         
@@ -140,7 +141,7 @@ class LogChecker(object):
             self.score -= 20
             self.result.append("Read offset correction : <font color=red>Fail, Virtual drive used: " + drive + " (-20 points)</font>")
         else:
-            logoffset = re.findall(ur"(Read offset correction|读取偏移校正)\s*:\s*([+-]?[0-9]+)", self.source, flags = re.I)
+            logoffset = re.findall(ur"(Read offset correction|Corrección de Desplazamiento de Lectura|读取偏移校正)\s*:\s*([+-]?[0-9]+)", self.source, flags = re.I)
             
             if not len(logoffset):
                 self.score -= 5
@@ -184,32 +185,36 @@ class LogChecker(object):
             return
         
         self.result.append("")
-        self.check(u"Read mode|抓轨模式|读取模式", r"([^\s]+)", u"Secure|精确模式|可靠Secure|可靠", 40)
-        self.check(u"Utilize accurate stream|使用精确流", u"(Yes|No|是|否)", u"Yes|No|是|否")
-        self.check(u"Defeat audio cache|屏蔽数据缓存|清空音频缓存", u"(Yes|No|是|否)", u"Yes|是", 5, '"Defeat audio cache" should be set to Yes')
-        self.check(u"Make use of C2 pointers|使用Ｃ２纠错|使用\s*C2\s*指示器|使用\s*C2\s*指针", u"(Yes|No|是|否)", u"Yes|是", 10, 'C2 pointers were used', reverse = True)
-        self.check(u"Fill up missing offset samples with silence|用静音填充丢失的偏移采样|用靜音填充抓取中遺失偏移的取樣|用静音填充抓取中丢失偏移的采样", u"(Yes|No|是|否)", u"Yes|是", 5, 'Does not fill up missing offset samples with silence')
-        self.check(u"Delete leading and trailing silent blocks|删除开始与结尾的静音部分|去除首尾靜音區塊|去除首尾静音块", u"(Yes|No|是|否)", u"Yes|是", 5, 'Deletes leading and trailing silent blocks', reverse = True)
-        self.check(u"Null samples used in CRC calculations|校验和计算中使用空白采样|在CRC\s*计算中使用了空样本", u"(Yes|No|是|否)", u"Yes|是", 1, 'Null samples should be used in CRC calculations, but this doesn\'t affect audio data')
-        self.check(u"Gap handling|间隙处理", r"([^\s])+", "Not detected", 20, 'Gaps were not detected', reverse = True)
-        self.check(u"Add ID3 tag|添加ＩＤ３标签|添加\s*ID3\s*标签", u"(Yes|No|是|否)", u"Yes|是", 0, 'ID3 tags should not be added to FLAC rips - they are mainly for MP3 files. FLACs should have vorbis comments for tags instead', reverse = True)
+        self.check(u"Read mode|Modo de Lectura|抓轨模式|读取模式", r"([^\s]+)", u"Secure|Seguro|精确模式|可靠Secure|可靠", 40)
+        self.check(u"Utilize accurate stream|Utilizar corriente precisa|使用精确流", u"(Yes|No|Sí|是|否)", u"Yes|No|Sí|是|否")
+        self.check(u"Defeat audio cache|Caché de audio por defecto|屏蔽数据缓存|清空音频缓存", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 5, '"Defeat audio cache" should be set to Yes')
+        self.check(u"Make use of C2 pointers|Utilizar los punteros C2|使用Ｃ２纠错|使用\s*C2\s*指示器|使用\s*C2\s*指针", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 10, 'C2 pointers were used', reverse = True)
+        self.check(u"Fill up missing offset samples with silence|Rellenar las muestras faltantes con silencios|用静音填充丢失的偏移采样|用靜音填充抓取中遺失偏移的取樣|用静音填充抓取中丢失偏移的采样", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 5, 'Does not fill up missing offset samples with silence')
+        self.check(u"Delete leading and trailing silent blocks|Eliminar silencios inicial y final|删除开始与结尾的静音部分|去除首尾靜音區塊|去除首尾静音块", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 5, 'Deletes leading and trailing silent blocks', reverse = True)
+        self.check(u"Null samples used in CRC calculations|Muestras nulas usadas en los calculos de CRC|校验和计算中使用空白采样|在CRC\s*计算中使用了空样本", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 1, 'Null samples should be used in CRC calculations, but this doesn\'t affect audio data')
+        self.check(u"Gap handling|Manejo de huecos|间隙处理", r"([^\s])+", "Not detected", 20, 'Gaps were not detected', reverse = True)
+        self.check(u"Add ID3 tag|Añadir ID3 tag|添加ＩＤ３标签|添加\s*ID3\s*标签", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 0, 'ID3 tags should not be added to FLAC rips - they are mainly for MP3 files. FLACs should have vorbis comments for tags instead', reverse = True)
         
         self.result.append("")
         
-        tracks = re.split(r"(Track\s*\d{1,3})", self.source)
-        if len(tracks) < 3 and self.language == "chs":
+        if self.language == "eng":
+            tracks = re.split(r"(Track\s*\d{1,3})", self.source)
+        if self.language == "chs":
             tracks = re.split(ur"(音轨\s*\d{1,3})", self.source)
+        elif self.language == "es":
+            tracks = re.split(ur"(\w*(?<!de )Pista\s*\d{1,3})", self.source)
+        else:
+            tracks = " "
         
         if len(tracks) >= 3:
             for i in range(len(tracks))[1::2]:
                 self.result.append("Checking " + tracks[i])
                 self.currenttrack = tracks[i + 1]
                 
-                self.checktrack("Suspicious position", r"(\d:\d{2}:\d{2})", 20, "Suspicious position(s) found")
+                self.checktrack("Suspicious position|Posición sospechosa", r"(\d:\d{2}:\d{2})", 20, "Suspicious position(s) found")
                 self.checktrack("Timing problem", r"(\d:\d{2}:\d{2})", 20, "Suspicious position(s) found")
                 self.checktrack("Missing samples", r"", 20, "Missing sample(s) found")
-                self.checktrack("Timing problem", r"(\d:\d{2}:\d{2})", 20, "Suspicious position(s) found")
-                self.checktrack(u"(Test|测试)\s*CRC", ur"([0-9A-F]{8})\n\s*(Copy|复制)\s*CRC\s*([0-9A-F]{8})", 10, "Test and copy was not used", reverse = False)
+                self.checktrack(u"Test|Comprobación|测试\s*CRC", ur"([0-9A-F]{8})\n\s*(Copy|Copiar|复制)\s*CRC\s*([0-9A-F]{8})", 10, " Test and copy was not used", reverse = False)
 
 def action_LogChecker(request):
     source = request.form['log']

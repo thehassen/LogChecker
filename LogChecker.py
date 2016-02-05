@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 u"LogChecker"
 import re
 Dependencies = ['time']
@@ -6,26 +6,26 @@ Dependencies = ['time']
 def macro_LogChecker(macro, noreply=True):
     
     output = """
-	<style type="text/css"> 
-	.styled-button-10 {
-		background:#5CCD00;
-		background:-moz-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-		background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#5CCD00),color-stop(100%,#4AA400));
-		background:-webkit-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-		background:-o-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-		background:-ms-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-		background:linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-		filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#5CCD00', endColorstr='#4AA400',GradientType=0);
-		padding:10px 15px;
-		color:#fff;
-		font-family:'Helvetica Neue',sans-serif;
-		font-size:16px;
-		border-radius:5px;
-		-moz-border-radius:5px;
-		-webkit-border-radius:5px;
-		border:1px solid #459A00
-	}
-	</style>
+    <style type="text/css"> 
+    .styled-button-10 {
+        background:#5CCD00;
+        background:-moz-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+        background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#5CCD00),color-stop(100%,#4AA400));
+        background:-webkit-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+        background:-o-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+        background:-ms-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+        background:linear-gradient(top,#5CCD00 0%,#4AA400 100%);
+        filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#5CCD00', endColorstr='#4AA400',GradientType=0);
+        padding:10px 15px;
+        color:#fff;
+        font-family:'Helvetica Neue',sans-serif;
+        font-size:16px;
+        border-radius:5px;
+        -moz-border-radius:5px;
+        -webkit-border-radius:5px;
+        border:1px solid #459A00
+    }
+    </style>
     <script src='http://microajax.googlecode.com/files/microajax.minified.js'></script>
     <script language="javascript">
         function getLog(){
@@ -70,14 +70,17 @@ class LogChecker(object):
         if passed:
             self.result.append(item + " : <font color=green>Pass</font>")
         else:
-            self.result.append(item + " : <font color=red>Fail")
-            if msg:
-                self.result[-1] += ", " + msg
-            if scoredelta:
-                self.result[-1] += " (-" + str(scoredelta) + " points)"
-            self.result[-1] += "</font>"
-                
-            self.score -= scoredelta
+            if scoredelta > 0:
+                self.result.append(item + " : <font color=red>Fail")
+                if msg:
+                    self.result[-1] += ", " + msg + " (-" + str(scoredelta) + " points)"
+                self.result[-1] += "</font>"
+                    
+                self.score -= scoredelta
+            else:
+                self.result.append(item + " : <font color=orange>Warning")
+                if msg:
+                    self.result[-1] += ", " + msg + " (No points deducted)</font>"
     
     def checktrack(self, item, regex, scoredelta = 0, msg = "", reverse = True):
         answer = re.findall("(" + item + "\s*" + regex + ")", self.currenttrack, flags = re.I + re.U)
@@ -153,17 +156,17 @@ class LogChecker(object):
                 results = list(offset.find({"keywords": {"$all": drive.split()}}))
                 
                 if len(results):
-					for result in results:
-						if result['offset'] == logoffset or result['offset'] == "+" + logoffset:
-							self.result.append("Read offset correction : <font color=green>" + logoffset + "</font> For drive : <font color=blue>" + result['name'] + "</font> : <font color=green>Pass</font>")
-							return True
-							
-						else:
-							self.score -= 5
-							self.result.append("Read offset correction : <font color=red>Incorrect read offset for drive. (-5 points)</font>")
-							self.result.append("Checked against the following drive(s): <table>")
-							self.result[-1] += "<tr><td><font color=blue>" + result['name'] + "</font></td><td>" + result['offset'] + "</td></tr>"
-							self.result[-1] += "</table>"
+                    for result in results:
+                        if result['offset'] == logoffset or result['offset'] == "+" + logoffset:
+                            self.result.append("Read offset correction : <font color=green>" + logoffset + "</font> For drive : <font color=blue>" + result['name'] + "</font> : <font color=green>Pass</font>")
+                            return True
+                            
+                        else:
+                            self.score -= 5
+                            self.result.append("Read offset correction : <font color=red>Incorrect read offset for drive. (-5 points)</font>")
+                            self.result.append("Checked against the following drive(s): <table>")
+                            self.result[-1] += "<tr><td><font color=blue>" + result['name'] + "</font></td><td>" + result['offset'] + "</td></tr>"
+                            self.result[-1] += "</table>"
                 
                 if not len(results) and logoffset == "0":
                     self.score -= 5
@@ -181,13 +184,13 @@ class LogChecker(object):
         
         self.result.append("")
         self.check(u"Read mode|抓轨模式|读取模式", r"([^\s]+)", u"Secure|精确模式|可靠Secure|可靠", 40)
-        self.check(u"Utilize accurate stream|使用精确流", u"(Yes|No|是|否)", u"Yes|是")
-        self.check(u"Defeat audio cache|屏蔽数据缓存|清空音频缓存", u"(Yes|No|是|否)", u"Yes|是", 5, '"Defeat audio cache" should be yes')
-        self.check(u"Make use of C2 pointers|使用Ｃ２纠错|使用\s*C2\s*指示器|使用\s*C2\s*指针", u"(Yes|No|是|否)", u"Yes|是", 10, '"C2 pointers were used', reverse = True)
+        self.check(u"Utilize accurate stream|使用精确流", u"(Yes|No|是|否)", u"Yes|No|是|否")
+        self.check(u"Defeat audio cache|屏蔽数据缓存|清空音频缓存", u"(Yes|No|是|否)", u"Yes|是", 5, '"Defeat audio cache" should be set to Yes')
+        self.check(u"Make use of C2 pointers|使用Ｃ２纠错|使用\s*C2\s*指示器|使用\s*C2\s*指针", u"(Yes|No|是|否)", u"Yes|是", 10, 'C2 pointers were used', reverse = True)
         self.check(u"Fill up missing offset samples with silence|用静音填充丢失的偏移采样|用靜音填充抓取中遺失偏移的取樣|用静音填充抓取中丢失偏移的采样", u"(Yes|No|是|否)", u"Yes|是", 5, 'Does not fill up missing offset samples with silence')
-        self.check(u"Delete leading and trailing silent blocks|删除开始与结尾的静音部分|去除首尾靜音區塊|去除首尾静音块", u"(Yes|No|是|否)", u"Yes|是", 5, '"Deletes leading and trailing silent blocks', reverse = True)
-        self.check(u"Null samples used in CRC calculations|校验和计算中使用空白采样|在CRC\s*计算中使用了空样本", u"(Yes|No|是|否)", u"Yes|是", 1, 'Null samples should be used in CRC calculations, but they don\'t affect audio data')
-        self.check(u"Gap handling|间隙处理", r"([^\s])+", "Not detected", 20, 'Gap handling was not detected', reverse = True)
+        self.check(u"Delete leading and trailing silent blocks|删除开始与结尾的静音部分|去除首尾靜音區塊|去除首尾静音块", u"(Yes|No|是|否)", u"Yes|是", 5, 'Deletes leading and trailing silent blocks', reverse = True)
+        self.check(u"Null samples used in CRC calculations|校验和计算中使用空白采样|在CRC\s*计算中使用了空样本", u"(Yes|No|是|否)", u"Yes|是", 1, 'Null samples should be used in CRC calculations, but this doesn\'t affect audio data')
+        self.check(u"Gap handling|间隙处理", r"([^\s])+", "Not detected", 20, 'Gaps were not detected', reverse = True)
         self.check(u"Add ID3 tag|添加ＩＤ３标签|添加\s*ID3\s*标签", u"(Yes|No|是|否)", u"Yes|是", 5, 'ID3 tags should not be added to FLAC rips - they are mainly for MP3 files. FLACs should have vorbis comments for tags instead', reverse = True)
         
         self.result.append("")
@@ -214,4 +217,9 @@ def action_LogChecker(request):
     
     logchecker = LogChecker(source)
     
-    return "Total Score: " + str(logchecker.score) + "<br>".join(logchecker.result)
+    if logchecker.score > 0:
+        scorecolor = " <font color=green>"
+    else:
+        scorecolor = " <font color=red>"
+    
+    return "<h3>Total Score:" + scorecolor + str(logchecker.score) + "</font></h3><br>".join(logchecker.result)

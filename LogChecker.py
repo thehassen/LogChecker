@@ -1,4 +1,4 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 u"LogChecker"
 import re
 Dependencies = ['time']
@@ -7,25 +7,8 @@ def macro_LogChecker(macro, noreply=True):
     
     output = """
     <style type="text/css"> 
-    .styled-button-10 {
-        background:#5CCD00;
-        background:-moz-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-        background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#5CCD00),color-stop(100%,#4AA400));
-        background:-webkit-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-        background:-o-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-        background:-ms-linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-        background:linear-gradient(top,#5CCD00 0%,#4AA400 100%);
-        filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#5CCD00', endColorstr='#4AA400',GradientType=0);
-        padding:10px 15px;
-        color:#fff;
-        font-family:'Helvetica Neue',sans-serif;
-        font-size:16px;
-        border-radius:5px;
-        -moz-border-radius:5px;
-        -webkit-border-radius:5px;
-        border:1px solid #459A00
-    }
-    </style>
+    .styled-button-10{background:#5CCD00;background:-moz-linear-gradient(top,#5CCD00 0,#4AA400 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0,#5CCD00),color-stop(100%,#4AA400));background:-webkit-linear-gradient(top,#5CCD00 0,#4AA400 100%);background:-o-linear-gradient(top,#5CCD00 0,#4AA400 100%);background:-ms-linear-gradient(top,#5CCD00 0,#4AA400 100%);background:linear-gradient(top,#5CCD00 0,#4AA400 100%);filter:progid: DXImageTransform.Microsoft.gradient( startColorstr='#5CCD00', endColorstr='#4AA400',GradientType=0);padding:10px 15px;color:#fff;font-family:'Helvetica Neue',sans-serif;font-size:16px;border-radius:5px;-moz-border-radius:5px;-webkit-border-radius:5px;border:1px solid #459A00}
+</style>
     <script src='http://microajax.googlecode.com/files/microajax.minified.js'></script>
     <script language="javascript">
         function getLog(){
@@ -177,6 +160,27 @@ class LogChecker(object):
         
         return True
     
+    def checkLogChecksum(self):
+        checksum = re.findall(ur"Log checksum\s[0-9A-F]{64}", self.source, flags = re.I + re.U)
+        eac_version1 = re.findall(ur"Exact Audio Copy\sV1[0-9.]*", self.source, flags = re.I + re.U)
+        eac_version_old = re.findall(ur"(Exact Audio Copy\sV0[0-9.]*|Other options\s*:)", self.source, flags = re.I + re.U)
+        
+        if not len(checksum) and len(eac_version1):
+            self.score -= 1
+            self.result.append("Log Checksum : <font color=red>Log checksum was not used (-1 points)</font>")
+            return False
+        if not len(checksum) and len(eac_version_old):
+            self.score -= 1
+            self.result.append("Log Checksum : <font color=red>Not ripped with EAC v1.0 or higher (no checksums) (-1 points)</font>")
+            return False
+        if len(checksum) and len(eac_version_old):
+            self.score -= 100
+            self.result.append("Log Checksum : <font color=red>The log was modified (-100 points)</font>")
+            return False
+        
+        self.result.append("Log Checksum : <font color=green>Pass</font>")
+        return True
+    
     def __init__(self, source):
         self.result = ["", ""]
         self.score = 100
@@ -195,6 +199,7 @@ class LogChecker(object):
         self.check(u"Null samples used in CRC calculations|Muestras nulas usadas en los calculos de CRC|校验和计算中使用空白采样|在CRC\s*计算中使用了空样本", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 1, 'Null samples should be used in CRC calculations, but this doesn\'t affect audio data')
         self.check(u"Gap handling|Manejo de huecos|间隙处理", r"([^\s])+", "Not detected", 20, 'Gaps were not detected', reverse = True)
         self.check(u"Add ID3 tag|Añadir ID3 tag|添加ＩＤ３标签|添加\s*ID3\s*标签", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 0, 'ID3 tags should not be added to FLAC rips - they are mainly for MP3 files. FLACs should have vorbis comments for tags instead', reverse = True)
+        self.checkLogChecksum()
         
         self.result.append("")
         

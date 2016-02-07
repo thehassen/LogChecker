@@ -79,9 +79,12 @@ class LogChecker(object):
             if "CRC" in answer[0][0]:
                 if answer[0][2] != answer[0][4]:
                     passed = False
-                    item = "CRC"
+                    item = "CRC Comparison"
                     msg = "CRC check does not match"
                     scoredelta = 30
+
+            if item.find("Test") != -1:
+                item = "Test track"
 
         item = item.split("|")[0]
         
@@ -190,7 +193,7 @@ class LogChecker(object):
             return
         
         self.result.append("")
-        self.check(u"Read mode|Modo de Lectura|抓轨模式|读取模式", r"([^\s]+)", u"Secure|Seguro|精确模式|可靠Secure|可靠", 40)
+        self.check(u"Read mode|Modo de Lectura|抓轨模式|读取模式", r"([^\s]+)", u"Secure|Seguro|精确模式|可靠Secure|可靠", 5, '"Burst mode" is not recommended. Please use "Secure mode" instead')
         self.check(u"Utilize accurate stream|Utilizar corriente precisa|使用精确流", u"(Yes|No|Sí|是|否)", u"Yes|No|Sí|是|否")
         self.check(u"Defeat audio cache|Caché de audio por defecto|屏蔽数据缓存|清空音频缓存", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 5, '"Defeat audio cache" should be set to Yes')
         self.check(u"Make use of C2 pointers|Utilizar los punteros C2|使用Ｃ２纠错|使用\s*C2\s*指示器|使用\s*C2\s*指针", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 10, 'C2 pointers were used', reverse = True)
@@ -229,8 +232,10 @@ def action_LogChecker(request):
     
     logchecker = LogChecker(source)
     
-    if logchecker.score > 0:
+    if logchecker.score >= 90:
         scorecolor = " <font color=green>"
+    elif logchecker.score >= 60:
+        scorecolor = " <font color=orange>"
     else:
         scorecolor = " <font color=red>"
     

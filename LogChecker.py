@@ -63,7 +63,8 @@ class LogChecker(object):
             else:
                 self.result.append(item + " : <font color=orange>Warning")
                 if msg:
-                    self.result[-1] += ", " + msg + " (No points deducted)</font>"
+                    self.result[-1] += ", " + msg + " (No points deducted)"
+                self.result[-1] += "</font>"
     
     def checktrack(self, item, regex, scoredelta = 0, msg = "", reverse = True):
         answer = re.findall("(" + item + "\s*" + regex + ")", self.currenttrack, flags = re.I + re.U)
@@ -77,16 +78,49 @@ class LogChecker(object):
         
         if len(answer):
             if "CRC" in answer[0][0]:
+                item = "CRC Comparison"
                 if answer[0][2] != answer[0][4]:
                     passed = False
-                    item = "CRC Comparison"
                     msg = "CRC check does not match"
                     scoredelta = 30
-
-            if item.find("Test") != -1:
-                item = "Test track"
+                else:
+                    passed = True
 
         item = item.split("|")[0]
+
+        if item.find("Test") != -1:
+            item = "CRC Comparison"
+            passed = False
+                
+        if passed:
+            self.result.append(item + " : <font color=green>Pass</font>")
+        else:
+            self.result.append(item + " : <font color=red>Fail")
+            if msg:
+                self.result[-1] += ", " + msg
+            if scoredelta:
+                self.result[-1] += " (-" + str(scoredelta) + " points)"
+            self.result[-1] += "</font>"
+
+            self.score -= scoredelta
+                    
+    def checkAllTracks(self, item, regex, scoredelta = 0, msg = "", reverse = True):
+        num_tracks = re.findall("(Track\s*\d{1,3}|音轨\s*\d{1,3}|\w*(?<!de )Pista\s*\d{1,3})", self.source, flags = re.I + re.U)
+        num_matches = re.findall("(" + item + "\s*" + regex + ")", self.source, flags = re.I + re.U)
+
+        if len(num_matches) == len(num_tracks):
+            passed = True
+        else:
+            passed = False
+        
+        if reverse:
+            passed = not passed
+        
+        if item.find("Test") != -1:
+            item = "Test & Copy"
+                
+        if item.find("Track not present in AccurateRip database") != -1:
+            item = "AccurateRip enabled"
         
         if passed:
             self.result.append(item + " : <font color=green>Pass</font>")
@@ -99,7 +133,7 @@ class LogChecker(object):
             self.result[-1] += "</font>"
                 
             self.score -= scoredelta
-    
+                
     def checkdrive(self):
         drive = re.findall(ur"(Used drive|Usar unidad|光驱型号|使用光碟機|使用驱动器)\s*:?\s*(.+)", self.source, flags = re.I + re.U)
         
@@ -154,8 +188,7 @@ class LogChecker(object):
                             self.score -= 5
                             self.result.append("Read offset correction : <font color=red>Incorrect read offset for drive. (-5 points)</font>")
                             self.result.append("Checked against the following drive(s): <table>")
-                            self.result[-1] += "<tr><td><font color=blue>" + result['name'] + "</font></td><td>" + result['offset'] + "</td></tr>"
-                            self.result[-1] += "</table>"
+                            self.result.append("<tr><td><font color=blue>" + result['name'] + "</font></td><td>" + result['offset'] + "</td></tr></table>")
                 
                 if not len(results) and logoffset == "0":
                     self.score -= 5
@@ -192,6 +225,7 @@ class LogChecker(object):
         if not self.checkdrive():
             return
         
+        #One time checks for settings
         self.result.append("")
         self.check(u"Read mode|Modo de Lectura|抓轨模式|读取模式", r"([^\s]+)", u"Secure|Seguro|精确模式|可靠Secure|可靠", 5, '"Burst mode" is not recommended. Please use "Secure mode" instead')
         self.check(u"Utilize accurate stream|Utilizar corriente precisa|使用精确流", u"(Yes|No|Sí|是|否)", u"Yes|No|Sí|是|否")
@@ -204,6 +238,12 @@ class LogChecker(object):
         self.check(u"Add ID3 tag|Añadir ID3 tag|添加ＩＤ３标签|添加\s*ID3\s*标签", u"(Yes|No|Sí|是|否)", u"Yes|Sí|是", 0, 'ID3 tags should not be added to FLAC rips - they are mainly for MP3 files. FLACs should have vorbis comments for tags instead', reverse = True)
         self.checkLogChecksum()
         
+        #All track checks, for settings that should be present at each track (not present in all = fail)
+        self.checkAllTracks(u"(Test|Comprobación|测试)\s*CRC", ur"([0-9A-F]{8})\n\s*(Copy|Copiar|复制)\s*CRC\s*([0-9A-F]{8})", 10, "This rip was not done using Test & Copy", reverse = False)
+        eac_hasAR = re.findall(ur"(Exact Audio Copy\sV0[0-9.]*\sprebeta\s[1-9]|Exact Audio Copy\sV1[0-9.]*)", self.source, flags = re.I + re.U)
+        if eac_hasAR:            
+            self.checkAllTracks(u"Track not present in AccurateRip database|Accurately ripped \(confidence [0-9]*\)|Cannot be verified as accurate \(confidence [0-9]*\)|Extraida con precisión \(confidencia [0-9]*\)|datos en Accuraterip|No se puede verificar como precisa \(confidencia [0-9]*\)", r"", 10, "AccurateRip not enabled for all tracks", reverse = False)
+
         self.result.append("")
         
         tracks = ""
@@ -219,11 +259,14 @@ class LogChecker(object):
                 self.result.append("Checking " + tracks[i])
                 self.currenttrack = tracks[i + 1]
                 
+                #Individual track checks
                 self.checktrack("Suspicious position|Posición sospechosa", r"(\d:\d{2}:\d{2})", 20, "Suspicious position(s) found")
                 self.checktrack("Timing problem", r"(\d:\d{2}:\d{2})", 20, "Suspicious position(s) found")
                 self.checktrack("Missing samples", r"", 20, "Missing sample(s) found")
-                self.checktrack(u"(Test|Comprobación|测试)\s*CRC", ur"([0-9A-F]{8})\n\s*(Copy|Copiar|复制)\s*CRC\s*([0-9A-F]{8})", 10, " Test and copy was not used", reverse = False)
+                self.checktrack(u"(Test|Comprobación|测试)\s*CRC", ur"([0-9A-F]{8})\n\s*(Copy|Copiar|复制)\s*CRC\s*([0-9A-F]{8})", 0, " Test & Copy was not used for this track.")
                 self.checktrack("Copy OK|Copia OK", r"", 5, " Copy not OK", reverse = False)
+
+                self.result.append("")
 
 def action_LogChecker(request):
     source = request.form['log']
